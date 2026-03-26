@@ -7,17 +7,57 @@ pipeline {
 
     stages {
 
+        stage('Detect Project Type') {
+            steps {
+                script {
+                    if (fileExists('pom.xml')) {
+                        env.PROJECT_TYPE = 'maven'
+                    } else if (fileExists('requirements.txt')) {
+                        env.PROJECT_TYPE = 'python'
+                    } else if (fileExists('package.json')) {
+                        env.PROJECT_TYPE = 'node'
+                    } else {
+                        error('No dependency file found')
+                    }
+                    echo "Project type: ${env.PROJECT_TYPE}"
+                }
+            }
+        }
+
         stage('Install') {
             steps {
                 echo '[GUARDIAN] Installing dependencies...'
-                sh 'pip install -r requirements.txt'
+                script {
+                    if (env.PROJECT_TYPE == 'python') {
+                        sh '''
+                            python3 -m venv venv
+                            . venv/bin/activate
+                            pip install -r requirements.txt
+                        '''
+                    } else if (env.PROJECT_TYPE == 'maven') {
+                        sh 'mvn clean install -DskipTests'
+                    } else if (env.PROJECT_TYPE == 'node') {
+                        sh 'npm install'
+                    }
+                }
             }
         }
 
         stage('Dependency Compatibility Tests') {
             steps {
                 echo '[GUARDIAN] Running dependency compatibility tests...'
-                sh 'python -m pytest test_dependencies.py -v'
+                script {
+                    if (env.PROJECT_TYPE == 'python') {
+                        sh '''
+                            . venv/bin/activate
+                            python -m pytest tests/ -v
+                        '''
+                    } else if (env.PROJECT_TYPE == 'maven') {
+                        sh 'mvn test'
+                    } else if (env.PROJECT_TYPE == 'node') {
+                        sh 'npm test'
+                    }
+                }
             }
         }
 
