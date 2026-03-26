@@ -27,15 +27,13 @@ class TestNumpy:
         arr = np.array([1, 2, 3])
         assert arr.sum() == 6
 
-    def test_numpy_legacy_types(self):
+    def test_numpy_string_type(self):
         """
-        PASSES on numpy 1.x
-        FAILS on numpy 2.x — np.bool, np.int, np.float were removed
+        np.string_ exists in numpy 1.x
+        np.string_ removed in numpy 2.0
+        PASSES on numpy 1.26.4
+        FAILS on numpy 2.1.3
         """
         import numpy as np
-        value = np.bool(True)
-        count = np.int(42)
-        ratio = np.float(3.14)
-        assert value == True
-        assert count == 42
-        assert ratio == 3.14
+        val = np.string_("hello")
+        assert val == b"hello"
